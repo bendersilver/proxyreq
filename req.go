@@ -9,8 +9,8 @@ import (
 	"golang.org/x/net/proxy"
 )
 
-// NewReq -
-func NewReq(proxyHostPort, proxyType string) (*req.Req, error) {
+// New -
+func New(proxyHostPort, proxyType string) (*req.Req, error) {
 	var dialer proxy.Dialer
 	var err error
 	var r *req.Req

@@ -16,7 +16,6 @@ func reqCheck(r *req.Req) error {
 		return err
 	}
 	rsp.ToJSON(&ipify)
-	// panic(ipify)
 	if ipify.IP == nil {
 		return fmt.Errorf("no parse ip")
 	}
@@ -24,7 +23,7 @@ func reqCheck(r *req.Req) error {
 }
 
 func TestReqHTTPS(t *testing.T) {
-	r, err := NewReq("us34.tcdn.me:443", "https")
+	r, err := New("us34.tcdn.me:443", "https")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +34,7 @@ func TestReqHTTPS(t *testing.T) {
 }
 
 func TestReqSocks5(t *testing.T) {
-	r, err := NewReq("209.216.137.197:3129", "socks5")
+	r, err := New("209.216.137.197:3129", "socks5")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +45,7 @@ func TestReqSocks5(t *testing.T) {
 }
 
 func TestReqHttp(t *testing.T) {
-	r, err := NewReq("190.144.34.146:3128", "http")
+	r, err := New("190.144.34.146:3128", "http")
 	if err != nil {
 		t.Fatal(err)
 	}
