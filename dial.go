@@ -9,7 +9,6 @@ import (
 	"net/textproto"
 	"net/url"
 	"strings"
-	"time"
 
 	"golang.org/x/net/proxy"
 )
@@ -17,23 +16,23 @@ import (
 type direct struct{}
 
 func (direct) Dial(network, addr string) (net.Conn, error) {
-	var d net.Dialer
-
-	d.FallbackDelay = DialTimeout
-	d.Timeout = DialTimeout
-	d.KeepAlive = DialTimeout
-	conn, err := d.Dial(network, addr)
+	dialer := &net.Dialer{
+		Timeout: DialTimeout,
+	}
+	conn, err := dialer.Dial(network, addr)
 	if err != nil {
 		return conn, err
 	}
-	conn.SetDeadline(time.Now().Add(DialTimeout))
 	return conn, err
 }
 
 type directHTTPS struct{}
 
 func (directHTTPS) Dial(network, addr string) (net.Conn, error) {
-	return tls.Dial(network, addr, &tls.Config{})
+	dialer := &net.Dialer{
+		Timeout: DialTimeout,
+	}
+	return tls.DialWithDialer(dialer, network, addr, &tls.Config{})
 }
 
 // HTTP -
