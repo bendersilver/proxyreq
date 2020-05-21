@@ -1,13 +1,42 @@
 package proxyreq
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"time"
 
+	browser "github.com/EDDYCJY/fake-useragent"
 	"github.com/imroc/req"
 	"golang.org/x/net/proxy"
 )
+
+func getArgs(args ...interface{}) (*time.Timer, []interface{}) {
+	args = append(args, req.Header{
+		"User-Agent":      browser.Computer(),
+		"Accept-Encoding": "gzip",
+	})
+	ctx, cancel := context.WithCancel(context.TODO())
+	timer := time.AfterFunc(ClientTimeout, func() {
+		cancel()
+	})
+	args = append(args, ctx)
+	return timer, args
+}
+
+// Post -
+func Post(rq *req.Req, url string, args ...interface{}) (*req.Resp, error) {
+	timer, v := getArgs(args)
+	defer timer.Stop()
+	return rq.Post(url, v...)
+}
+
+// Get -
+func Get(rq *req.Req, url string, args ...interface{}) (*req.Resp, error) {
+	timer, v := getArgs(args)
+	defer timer.Stop()
+	return rq.Get(url, v...)
+}
 
 // New -
 func New(proxyHostPort, proxyType string) (*req.Req, error) {
