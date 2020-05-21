@@ -13,22 +13,27 @@ ClientTimeout (default 3s)
 ```go
 package main
 
-import "github.com/bendersilver/proxyreq"
+import (
+	"fmt"
 
+	"github.com/bendersilver/proxyreq"
+)
 
 func main() {
-    var proxy = "209.216.137.197:3129" // host:port
-    var proxyType = "socks5" // http | https | socks5
-    r, err := proxyreq.New(proxy, proxyType)
-    if err != nil {
-        panic(err)
-    }
-    rsp, err := r.Get("https://api.ipify.org?format=json")
-    if err != nil {
-        panic(err)
-    }
-	print(rsp.String())
+	var proxy = "209.216.137.197:3129" // host:port
+	var proxyType = "socks5"           // http | https | socks5
+	r, err := proxyreq.New(proxy, proxyType)
+	if err != nil {
+		panic(err)
+	}
+	// add head
+	// "User-Agent":      browser.Computer()
+	// "Accept-Encoding": "gzip"
+	rsp, err := r.Get("https://api.ipify.org")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s\n", rsp.String())
+	// out: proxy ip
 }
-
-
 ```
