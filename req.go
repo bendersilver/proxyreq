@@ -57,10 +57,31 @@ func new(proxyHostPort, proxyType string) (*req.Req, error) {
 		dialer, err = proxy.FromURL(ur, direct{})
 	}
 	if err == nil {
-		tr := &http.Transport{
+		r.Client().Transport = &http.Transport{
 			Dial: dialer.Dial,
 		}
-		r.Client().Transport = tr
 	}
 	return r, err
+}
+
+// NewEmpty -
+func NewEmpty() *Rq {
+	return &Rq{
+		rq: req.New(),
+	}
+}
+
+// SetTransport -
+func (r *Rq) SetTransport(u *url.URL) error {
+	var dialer proxy.Dialer
+	var err error
+	if u.Scheme == "https" {
+		dialer, err = proxy.FromURL(u, directHTTPS{})
+	} else {
+		dialer, err = proxy.FromURL(u, direct{})
+	}
+	r.rq.Client().Transport = &http.Transport{
+		Dial: dialer.Dial,
+	}
+	return err
 }
