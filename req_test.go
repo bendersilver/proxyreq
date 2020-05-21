@@ -60,11 +60,10 @@ func TestReqGet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rsp, err := Get(r, "https://www.avito.ru/sverdlovskaya_oblast/oborudovanie_dlya_biznesa?s=104&user=1&q=%D1%81%D1%82%D1%83%D0%BB+%D0%B4%D0%BB%D1%8F+%D0%BE%D1%84%D0%B8%D1%81%D0%B0")
+	rsp, err := Get(r, "https://api.ipify.org?format=json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Fatal(rsp.String())
 	var ipify struct {
 		IP *string `json:"ip"`
 	}
@@ -72,5 +71,4 @@ func TestReqGet(t *testing.T) {
 	if ipify.IP == nil {
 		t.Fatal("no parse ip")
 	}
-	t.Fatal(rsp.String())
 }
