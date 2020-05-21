@@ -24,22 +24,22 @@ func getArgs(args ...interface{}) (*time.Timer, []interface{}) {
 	return timer, args
 }
 
-// Post -
-func Post(rq *req.Req, url string, args ...interface{}) (*req.Resp, error) {
+// post -
+func post(rq *req.Req, url string, args ...interface{}) (*req.Resp, error) {
 	timer, v := getArgs(args)
 	defer timer.Stop()
 	return rq.Post(url, v...)
 }
 
-// Get -
-func Get(rq *req.Req, url string, args ...interface{}) (*req.Resp, error) {
+// get -
+func get(rq *req.Req, url string, args ...interface{}) (*req.Resp, error) {
 	timer, v := getArgs(args)
 	defer timer.Stop()
 	return rq.Get(url, v...)
 }
 
-// New -
-func New(proxyHostPort, proxyType string) (*req.Req, error) {
+// new -
+func new(proxyHostPort, proxyType string) (*req.Req, error) {
 	var dialer proxy.Dialer
 	var err error
 	var r *req.Req
