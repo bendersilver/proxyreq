@@ -3,56 +3,36 @@ package proxyreq
 import (
 	"bufio"
 	"bytes"
-	"crypto/tls"
 	"fmt"
 	"net"
 	"net/textproto"
 	"net/url"
 	"strings"
+	"time"
 
+	"github.com/bendersilver/proxyreq/dhttp"
+	"github.com/bendersilver/proxyreq/dhttps"
 	"golang.org/x/net/proxy"
 )
 
-type direct struct{}
-
-func (direct) Dial(network, addr string) (net.Conn, error) {
-	dialer := &net.Dialer{
-		Timeout: DialTimeout,
-	}
-	conn, err := dialer.Dial(network, addr)
-	if err != nil {
-		return conn, err
-	}
-	return conn, err
+// host -
+type host struct {
+	forward proxy.Dialer
+	addr    string
 }
 
-type directHTTPS struct{}
-
-func (directHTTPS) Dial(network, addr string) (net.Conn, error) {
-	dialer := &net.Dialer{
-		Timeout: DialTimeout,
-	}
-	return tls.DialWithDialer(dialer, network, addr, &tls.Config{})
-}
-
-// HTTP -
-type HTTP struct {
-	dialer proxy.Dialer
-	addr   string
-}
-
-// newHTTP -
-func newHTTP(host string, d proxy.Dialer) (*HTTP, error) {
-	h := &HTTP{
-		dialer: d,
-		addr:   host,
+// newHost -
+func newHost(hst string, d proxy.Dialer) (*host, error) {
+	h := &host{
+		forward: d,
+		addr:    hst,
 	}
 	return h, nil
 }
 
-// newHTTPDialer returns a http proxy dialer.
-func newHTTPDialer(uri *url.URL, d proxy.Dialer) (proxy.Dialer, error) {
-	return newHTTP(uri.Host, d)
+// newHostDialer returns a http proxy dialer.
+func newHostDialer(uri *url.URL, d proxy.Dialer) (proxy.Dialer, error) {
+	return newHost(uri.Host, d)
 }
 
 func parseStartLine(line string) (r1, r2, r3 string, ok bool) {
@@ -82,8 +62,8 @@ func newConn(c net.Conn) *conn {
 }
 
 // Dial -
-func (h *HTTP) Dial(network, addr string) (net.Conn, error) {
-	c, err := h.dialer.Dial(network, h.addr)
+func (h *host) Dial(network, addr string) (net.Conn, error) {
+	c, err := h.forward.Dial(network, h.addr)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +102,36 @@ func (h *HTTP) Dial(network, addr string) (net.Conn, error) {
 
 }
 
+// Dialer -
+func Dialer(h, t string) (proxy.Dialer, error) {
+	ur := &url.URL{
+		Host:   h,
+		Scheme: t,
+	}
+	switch t {
+	case "https":
+		return proxy.FromURL(ur, dhttps.Direct)
+	case "http":
+		return proxy.FromURL(ur, dhttp.Direct)
+	case "socks5":
+		return proxy.SOCKS5("tcp", h, nil, dhttp.Direct)
+	}
+	return nil, fmt.Errorf("err")
+}
+
+// SetDialTimeout -
+func SetDialTimeout(t time.Duration) {
+	dhttp.DialTimeout = t
+	dhttps.DialTimeout = t
+}
+
+// SetConnTimeout -
+func SetConnTimeout(t time.Duration) {
+	dhttp.ConnTimeout = t
+	dhttps.ConnTimeout = t
+}
+
 func init() {
-	proxy.RegisterDialerType("http", newHTTPDialer)
-	proxy.RegisterDialerType("https", newHTTPDialer)
+	proxy.RegisterDialerType("http", newHostDialer)
+	proxy.RegisterDialerType("https", newHostDialer)
 }

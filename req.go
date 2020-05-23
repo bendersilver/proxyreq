@@ -1,41 +1,33 @@
 package proxyreq
 
 import (
-	"context"
 	"net/http"
 	"net/url"
-	"time"
 
 	browser "github.com/EDDYCJY/fake-useragent"
+	"github.com/bendersilver/proxyreq/dhttp"
+	"github.com/bendersilver/proxyreq/dhttps"
 	"github.com/imroc/req"
 	"golang.org/x/net/proxy"
 )
 
-func getArgs(args ...interface{}) (*time.Timer, []interface{}) {
+func getArgs(args ...interface{}) []interface{} {
 	args = append(args, req.Header{
 		"User-Agent":      browser.Computer(),
 		"Accept-Encoding": "gzip",
 	})
-	ctx, cancel := context.WithCancel(context.TODO())
-	timer := time.AfterFunc(ClientTimeout, func() {
-		cancel()
-	})
-	args = append(args, ctx)
-	return timer, args
+	args = append(args)
+	return args
 }
 
 // post -
 func post(rq *req.Req, url string, args ...interface{}) (*req.Resp, error) {
-	timer, v := getArgs(args)
-	defer timer.Stop()
-	return rq.Post(url, v...)
+	return rq.Post(url, getArgs(args)...)
 }
 
 // get -
 func get(rq *req.Req, url string, args ...interface{}) (*req.Resp, error) {
-	timer, v := getArgs(args)
-	defer timer.Stop()
-	return rq.Get(url, v...)
+	return rq.Get(url, getArgs(args)...)
 }
 
 // new -
@@ -45,17 +37,7 @@ func new(proxyHostPort, proxyType string) (*req.Req, error) {
 	var r *req.Req
 
 	r = req.New()
-	r.Client().Timeout = time.Duration(ClientTimeout) * time.Second
-
-	ur := &url.URL{
-		Host:   proxyHostPort,
-		Scheme: proxyType,
-	}
-	if proxyType == "https" {
-		dialer, err = proxy.FromURL(ur, directHTTPS{})
-	} else {
-		dialer, err = proxy.FromURL(ur, direct{})
-	}
+	dialer, err = Dialer(proxyHostPort, proxyType)
 	if err == nil {
 		r.Client().Transport = &http.Transport{
 			Dial: dialer.Dial,
@@ -76,9 +58,9 @@ func (r *Rq) SetTransport(u *url.URL) error {
 	var dialer proxy.Dialer
 	var err error
 	if u.Scheme == "https" {
-		dialer, err = proxy.FromURL(u, directHTTPS{})
+		dialer, err = proxy.FromURL(u, dhttps.Direct)
 	} else {
-		dialer, err = proxy.FromURL(u, direct{})
+		dialer, err = proxy.FromURL(u, dhttp.Direct)
 	}
 	r.rq.Client().Transport = &http.Transport{
 		Dial: dialer.Dial,
