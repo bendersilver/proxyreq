@@ -1,12 +1,10 @@
 package proxyreq
 
 import (
+	"crypto/tls"
 	"net/http"
-	"net/url"
 
 	browser "github.com/EDDYCJY/fake-useragent"
-	"github.com/bendersilver/proxyreq/dhttp"
-	"github.com/bendersilver/proxyreq/dhttps"
 	"github.com/imroc/req"
 	"golang.org/x/net/proxy"
 )
@@ -41,6 +39,9 @@ func new(proxyHostPort, proxyType string) (*req.Req, error) {
 	if err == nil {
 		r.Client().Transport = &http.Transport{
 			Dial: dialer.Dial,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
 		}
 	}
 	return r, err
@@ -54,16 +55,15 @@ func NewEmpty() *Rq {
 }
 
 // SetTransport -
-func (r *Rq) SetTransport(u *url.URL) error {
-	var dialer proxy.Dialer
-	var err error
-	if u.Scheme == "https" {
-		dialer, err = proxy.FromURL(u, dhttps.Direct)
-	} else {
-		dialer, err = proxy.FromURL(u, dhttp.Direct)
-	}
-	r.rq.Client().Transport = &http.Transport{
-		Dial: dialer.Dial,
+func (r *Rq) SetTransport(proxyHostPort, proxyType string) error {
+	dialer, err := Dialer(proxyHostPort, proxyType)
+	if err == nil {
+		r.rq.Client().Transport = &http.Transport{
+			Dial: dialer.Dial,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
 	}
 	return err
 }
